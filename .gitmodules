@@ -1,0 +1,3 @@
+[submodule "darpa-sense-hardware"]
+	path = darpa-sense-hardware
+	url = git@github.com:henryclaessonVT/darpa-sense-hardware.git
