@@ -15,9 +15,10 @@ from PIL import Image, ImageTk  # Pillow library for more image formats
 import sv_ttk
 from matplotlib.colors import Normalize
 import random
+from tkinter import filedialog
 
 
-global selected_value, com_ports, selected_values2, threads, com_data, grid1, grid2
+global selected_value, com_ports, selected_values2, threads, com_data, grid1, grid2, data
 
 # Initialize the 
 ser = [None]  # Serial object (initially None)
@@ -144,7 +145,7 @@ def screen3():
 
 # Function to update the plot
 def update_plot(current_time):
-    global canvas1, canvas2, com_data, data_lock, grid1, grid2
+    global canvas1, canvas2, com_data, data_lock, grid1, grid2, data
     with data_lock:    
         ax1.clear()
         ax2.clear()
@@ -174,25 +175,6 @@ def update_plot(current_time):
                 ax2.imshow(grid2, interpolation='gaussian', cmap='turbo',  vmin = 10, vmax = 45)
 
 
-
-                # ax1.set_title('haha')
-                # latest_strain_value = strain_values.iloc[-1]  # Get the latest strain value for this location
-                # ax2.imshow(grid_z.T, extent=(min(x), max(x), min(y), max(y)), origin='lower', 
-                # cmap='hot', aspect='auto', norm=Normalize(vmin=min(z), vmax=max(z)))
-
-
-            # if not strain_values.empty:
-                # latest_strain_value = strain_values.iloc[-1]  # Get the latest strain value for this location
-                # ax1.scatter(x, y, s=200, c=latest_strain_value["Strain"], cmap='Reds', vmin=0, vmax=100)
-                # ax1.text(x, y, f"ID: {loc_id}\nStrain: {latest_strain_value['Strain']:.2f}", 
-                #         ha="center", va="center", fontsize=10)
-            # if not temp_values.empty:
-            #     latest_temp_value = temp_values.iloc[-1]  # Get the latest strain value for this location
-            #     ax2.scatter(x, y, s=200, c=latest_temp_value["Temp"], cmap='Reds', vmin=0, vmax=100)
-            #     ax2.text(x, y, f"ID: {loc_id}\nTemp: {latest_temp_value['Temp']:.2f}", 
-            #             ha="center", va="center", fontsize=10)
-            
-
         ax1.set_xlim(0, 3)
         ax1.set_ylim(-.5, .5)
         ax1.set_title("Strain Map")# - Time: {current_time:.2f}",fontsize=20)
@@ -209,7 +191,7 @@ def update_plot(current_time):
 
 # Function to read serial data and update the data storage
 def read_serial(com_port):
-    global com_data, data_lock, stop_event
+    global com_data, data_lock, stop_event, data
     ser = serial.Serial(com_port, baudrate=115200, timeout=1)  # Adjust baudrate and timeout as needed
     while not stop_event.is_set():
         if ser and ser.in_waiting:
@@ -240,7 +222,7 @@ def list_ports():
 
 # Function to start logging data
 def start_logging():
-    global ser, logging, selected_values2, threads, com_data, data_lock, stop_event
+    global ser, logging, selected_values2, threads, com_data, data_lock, stop_event, data
     ser = [None] * int(len(selected_values2)) 
     stop_event.clear()
     for com_port in selected_values2:
@@ -255,9 +237,18 @@ def start_logging():
 
 # Function to stop logging data
 def stop_logging():
-    global logging, threads
+    global logging, threads, data
     logging = False
     stop_event.set()
+    # Function to stop logging and save the DataFrame to a CSV file
+    # Ask the user for a file name and location to save the CSV
+    file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                             filetypes=[("CSV files", "*.csv")],
+                                             title="Save as")
+    if file_path:
+        # Export the DataFrame to a CSV file
+        data.to_csv(file_path, index=False)
+        print(f"Data saved to {file_path}")
     # for thread in threads:
     #     if ser:
     #         ser.close()
